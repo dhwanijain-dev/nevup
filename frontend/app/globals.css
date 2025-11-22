@@ -1,0 +1,139 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+/*
+  Merged globals.css
+  - Based on your provided Index.css (design system using HSL variables)
+  - Preserves Tailwind layers, utilities and a dark mode override
+  - Override/cleanup: prefer HSL-based vars from Index.css for consistency
+*/
+
+@layer base {
+  :root {
+    --background: 220 25% 6%;
+    --foreground: 210 40% 98%;
+    --color-safari: oklch(66.753% 0.17026 245.626);
+   
+    --card: 220 20% 8%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 220 20% 10%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 190 100% 50%;
+    --primary-foreground: 220 25% 6%;
+
+    --secondary: 160 100% 45%;
+    --secondary-foreground: 220 25% 6%;
+
+    --muted: 220 15% 15%;
+    --muted-foreground: 215 20% 65%;
+
+    --accent: 190 100% 50%;
+    --accent-foreground: 220 25% 6%;
+
+    --destructive: 0 70% 60%;
+    --destructive-foreground: 210 40% 98%;
+
+    --success: 150 80% 45%;
+    --success-foreground: 220 25% 6%;
+
+    --border: 220 20% 18%;
+    --input: 220 20% 15%;
+    --ring: 190 100% 50%;
+
+    --radius: 0.75rem;
+
+    --chart-1: 190 100% 50%;
+    --chart-2: 160 100% 45%;
+    --chart-3: 280 80% 60%;
+    --chart-4: 40 100% 50%;
+    --chart-5: 0 70% 60%;
+
+    --gradient-primary: linear-gradient(135deg, hsl(190 100% 50%), hsl(160 100% 45%));
+    --gradient-border: linear-gradient(135deg, hsl(190 100% 50% / 0.8), hsl(160 100% 45% / 0.8));
+    
+    --sidebar-background: 220 25% 5%;
+    --sidebar-foreground: 210 40% 98%;
+    --sidebar-primary: 190 100% 50%;
+    --sidebar-primary-foreground: 220 25% 6%;
+    --sidebar-accent: 220 20% 12%;
+    --sidebar-accent-foreground: 210 40% 98%;
+    --sidebar-border: 220 20% 18%;
+    --sidebar-ring: 190 100% 50%;
+  }
+}
+
+@layer base {
+  * {
+    /* Standard box model and sensible defaults.
+       Replaced `@apply border-border` (unknown utility) with explicit CSS so Tailwind build
+       doesn't require a custom `border-border` utility. Components can still use CSS vars.
+    */
+    box-sizing: border-box;
+    border-color: hsl(var(--border));
+    outline-color: hsl(var(--ring));
+  }
+
+  body {
+    /* Use the HSL color variables: set background and foreground using CSS color functions */
+    background: hsl(var(--background));
+    color: hsl(var(--foreground));
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  .gradient-border {
+    position: relative;
+    background: hsl(var(--card));
+    border-radius: var(--radius);
+  }
+
+  .gradient-border::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: var(--radius);
+    padding: 1px;
+    background: var(--gradient-border);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+  }
+
+  .text-gradient {
+    background: var(--gradient-primary);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+}
+
+@layer utilities {
+  .animate-gradient {
+    background-size: 200% 200%;
+    animation: gradient 3s ease infinite;
+  }
+
+  @keyframes gradient {
+    0%, 100% {
+      background-position: 0% 50%;
+    }
+    50% {
+      background-position: 100% 50%;
+    }
+  }
+}
+
+/* Dark-mode overrides: keep the theme consistent but invert some tones */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: 220 25% 6%;
+    --foreground: 210 40% 98%;
+    /* You can refine dark values here if you prefer different contrasts */
+  }
+}
