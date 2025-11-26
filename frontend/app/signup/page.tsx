@@ -20,23 +20,59 @@ export default function SignupPage() {
   const [password, setPassword] = useState("")
   const [confirm, setConfirm] = useState("")
   const [error, setError] = useState<string | null>(null)
+  const [loading, setLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setError(null)
+
+    if (!username || !email || !dob || !password || !confirm) {
+      setError("Please fill all required fields")
+      return
+    }
 
     if (password !== confirm) {
       setError("Passwords do not match")
       return
     }
 
-    const user = { username, dob, email, password }
-    // Save a registered user in localStorage for this temporary flow
-    localStorage.setItem("registeredUser", JSON.stringify(user))
-    // Optionally auto-login
-    // localStorage.setItem('isAuthenticated', 'true')
-    router.push("/login")
+    setLoading(true)
+    try {
+      const res = await fetch("http://localhost:8000/auth/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          username,
+          email,
+          dateofbrith: dob,
+          password,
+        }),
+      })
+
+      if (!res.ok) {
+        // try to parse error message
+        let message = "Signup failed"
+        try {
+          const data = await res.json()
+          message = data?.message || data?.error || message
+        } catch {
+          try {
+            message = await res.text()
+          } catch {}
+        }
+        setError(message || `Request failed with status ${res.status}`)
+        return
+      }
+
+      // success
+      router.push("/login")
+    } catch (err: any) {
+      setError(err?.message || "Network error. Please try again.")
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -151,8 +187,8 @@ export default function SignupPage() {
               </div>
             )}
 
-            <Button type="submit" className="w-full bg-linear-to-r from-primary to-secondary text-primary-foreground font-semibold hover:opacity-90">
-              Create account
+            <Button type="submit" disabled={loading} className="w-full bg-linear-to-r from-primary to-secondary text-primary-foreground font-semibold hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed">
+              {loading ? "Creating..." : "Create account"}
             </Button>
 
             <div className="grid grid-cols-2 gap-3">

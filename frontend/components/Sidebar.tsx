@@ -1,7 +1,7 @@
 "use client"
 
 import React from "react"
-import { BarChart3, Calendar, MessageSquare,CandlestickChart, User, Settings, Mail, HelpCircle,   Trophy, Earth, PanelLeftClose, PanelLeft } from "lucide-react";
+import { BarChart3, MessageSquare, CandlestickChart, User, Settings, Mail, HelpCircle, Trophy, Earth, PanelLeftClose, PanelLeft } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -37,13 +37,22 @@ export function Sidebar() {
   React.useEffect(() => {
     try {
       localStorage.setItem('mainSidebarCollapsed', collapsed ? 'true' : 'false')
-    } catch {}
+    } catch { }
   }, [collapsed])
 
   const [xp, setXp] = React.useState<number>(() => {
     if (typeof window === 'undefined') return 0
     const stored = localStorage.getItem('userXP')
     return stored ? parseInt(stored, 10) : 5200 // default demo XP
+  })
+  const [overrides, setOverrides] = React.useState<Record<number, string>>(() => {
+    if (typeof window === 'undefined') return {}
+    try {
+      const raw = localStorage.getItem('tierImageOverrides')
+      return raw ? JSON.parse(raw) : {}
+    } catch {
+      return {}
+    }
   })
 
   // Allow external updates (in future maybe from context); listen to custom event
@@ -56,21 +65,24 @@ export function Sidebar() {
   }, [])
 
   React.useEffect(() => {
-    try { localStorage.setItem('userXP', xp.toString()) } catch {}
+    try { localStorage.setItem('userXP', xp.toString()) } catch { }
   }, [xp])
 
   const badgeInfo = getBadge(xp)
   const nextBadge = badgeInfo.nextThreshold ? BADGES.find(b => b.min === badgeInfo.nextThreshold) : null
+  const tierIndex = BADGES.findIndex(b => b.tier === badgeInfo.current.tier)
+  const defaultTierImage = tierIndex >= 0 ? `/assets/tier${tierIndex + 1}-no-bg.png` : '/assets/tier1-no-bg.png'
+  const displayTierImage = overrides[tierIndex + 1] || defaultTierImage
 
   const toggleSidebar = () => {
     const next = !collapsed
     setCollapsed(next)
     try {
       localStorage.setItem('mainSidebarCollapsed', next ? 'true' : 'false')
-    } catch {}
+    } catch { }
     try {
       window.dispatchEvent(new CustomEvent('mainSidebarToggled', { detail: { collapsed: next } }))
-    } catch {}
+    } catch { }
   }
 
   return (
@@ -81,8 +93,9 @@ export function Sidebar() {
         collapsed ? "justify-center" : "justify-between"
       )}>
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-linear-to-br from-primary to-secondary flex items-center justify-center shrink-0">
-            <Image src="/assets/nevuplogo.png" className={cn("", collapsed ? "ml-20 ": "")} alt="Logo" width={24} height={24} />
+          {/* Simplified flat background replacing gradient per cleanup */}
+          <div className="w-10 h-10 rounded-full bg-card border border-border flex items-center justify-center shrink-0">
+            <Image src="/assets/nevuplogo.png" className={cn("", collapsed ? "ml-20 " : "")} alt="Logo" width={24} height={24} />
           </div>
           {!collapsed && (
             <span className="text-lg font-bold text-foreground whitespace-nowrap">
@@ -129,7 +142,7 @@ export function Sidebar() {
                   collapsed ? 'p-1 rounded-sm' : ''
                 )}
               >
-                <item.icon  suppressHydrationWarning className={cn("w-5 h-5 transition-all", collapsed ? 'w-4 h-4' : 'w-5 h-5')} />
+                <item.icon suppressHydrationWarning className={cn("w-5 h-5 transition-all", collapsed ? 'w-4 h-4' : 'w-5 h-5')} />
               </span>
               <span className={cn(
                 "ml-3 text-sm font-medium transition-all duration-200 whitespace-nowrap",
@@ -179,31 +192,34 @@ export function Sidebar() {
       {!collapsed && (
         <Link href="/badges" className="relative w-full">
 
-        <div className="w-full px-3 mt-4 hover:scale-105 transition-transform">
-          <div className="border border-sidebar-border rounded-md p-3 flex flex-col gap-2">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-muted-foreground">XP Progress</span>
-              <span className="text-[10px] text-muted-foreground tabular-nums">{xp.toLocaleString()} XP</span>
-            </div>
-            <div className="flex items-center justify-between text-[11px]">
-              <span className="font-medium text-foreground">{badgeInfo.current.tier}</span>
+          <div className="w-full px-3 mt-4 hover:scale-105 transition-transform">
+            <div className="border border-sidebar-border rounded-md p-3 flex flex-col gap-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold text-muted-foreground">XP Progress</span>
+                <span className="text-[10px] text-muted-foreground tabular-nums">{xp.toLocaleString()} XP</span>
+              </div>
+              <div className="flex items-center justify-between text-[11px]">
+                <div className="flex items-center gap-2">
+                  <img src={displayTierImage} alt={badgeInfo.current.tier} className="w-8 h-8 object-contain" />
+                  <span className="font-medium text-foreground">{badgeInfo.current.tier}</span>
+                </div>
+                {nextBadge ? (
+                  <span className="text-muted-foreground">{xp}/{nextBadge.min}</span>
+                ) : (
+                  <span className="text-muted-foreground">Max</span>
+                )}
+              </div>
+              <Progress value={badgeInfo.progressToNext} className="h-2" />
               {nextBadge ? (
-                <span className="text-muted-foreground">{xp}/{nextBadge.min}</span>
+                <p className="text-[10px] text-muted-foreground">Next: {nextBadge.tier} at {nextBadge.min.toLocaleString()} XP</p>
               ) : (
-                <span className="text-muted-foreground">Max</span>
+                <p className="text-[10px] text-muted-foreground">Top tier achieved</p>
               )}
             </div>
-            <Progress value={badgeInfo.progressToNext} className="h-2" />
-            {nextBadge ? (
-              <p className="text-[10px] text-muted-foreground">Next: {nextBadge.tier} at {nextBadge.min.toLocaleString()} XP</p>
-            ) : (
-              <p className="text-[10px] text-muted-foreground">Top tier achieved</p>
-            )}
           </div>
-        </div>
         </Link>
       )}
-      {/* Collapse button moved to header, removing bottom button */}
+ 
     </aside>
   )
 }

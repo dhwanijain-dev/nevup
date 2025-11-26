@@ -6,12 +6,14 @@ export interface BadgeDef {
   description?: string
 }
 
+// Updated tier naming sequence: rabbit < raider < assasin < hunter < Connoisseur
+// Retain previous color styling mapped to ascending prestige.
 export const BADGES: BadgeDef[] = [
-  { tier: 'Bronze', min: 0, colorClass: 'bg-amber-800/25 text-amber-300 border-amber-700/40', accent: '#b87333', description: 'Getting started—learn the ropes and build consistency.' },
-  { tier: 'Silver', min: 1000, colorClass: 'bg-slate-500/25 text-slate-200 border-slate-400/40', accent: '#c0c0c0', description: 'Solid progress with improving discipline and risk control.' },
-  { tier: 'Gold', min: 5000, colorClass: 'bg-yellow-500/20 text-yellow-300 border-yellow-400/40', accent: '#ffd700', description: 'Consistent performer demonstrating strong fundamentals.' },
-  { tier: 'Platinum', min: 10000, colorClass: 'bg-cyan-400/15 text-cyan-200 border-cyan-300/40', accent: '#7df9ff', description: 'Advanced proficiency and refined strategy execution.' },
-  { tier: 'Diamond', min: 20000, colorClass: 'bg-[#38ff7e]/20 text-[#38ff7e] border-[#38ff7e]/40', accent: '#38ff7e', description: 'Elite mastery and exceptional market insight.' },
+  { tier: 'rabbit', min: 0, colorClass: 'bg-amber-800/25 text-amber-300 border-amber-700/40', accent: '#b87333', description: 'New to the path. Learning fundamentals and forming habits.' },
+  { tier: 'raider', min: 1000, colorClass: 'bg-slate-500/25 text-slate-200 border-slate-400/40', accent: '#c0c0c0', description: 'Showing initiative and tactical growth.' },
+  { tier: 'assasin', min: 2000, colorClass: 'bg-yellow-500/20 text-yellow-300 border-yellow-400/40', accent: '#ffd700', description: 'Sharpened precision and consistent execution.' },
+  { tier: 'hunter', min: 3000, colorClass: 'bg-cyan-400/15 text-cyan-200 border-cyan-300/40', accent: '#7df9ff', description: 'Advanced tracking, timing, and strategic adaptation.' },
+  { tier: 'Connoisseur', min: 4000, colorClass: 'bg-[#38ff7e]/20 text-[#38ff7e] border-[#38ff7e]/40', accent: '#38ff7e', description: 'Master-level insight and refined methodology.' },
 ]
 
 export interface BadgeInfo {

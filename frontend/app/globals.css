@@ -45,7 +45,7 @@
     --ring: 190 100% 50%;
 
     --radius: 0.75rem;
-
+    --font-poppins: var(--font-poppins, "Poppins", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial);
     --chart-1: 190 100% 50%;
     --chart-2: 160 100% 45%;
     --chart-3: 280 80% 60%;
@@ -136,4 +136,9 @@
     --foreground: 210 40% 98%;
     /* You can refine dark values here if you prefer different contrasts */
   }
+}
+
+
+html,body{
+  font-family: var(--font-poppins), system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
 }

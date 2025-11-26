@@ -187,7 +187,7 @@ const patternReconitionData = [
           <div className=" relative flex-3/4">
             <Card className=" h-full  px-5 ">
               <h1 className="text-2xl font-semibold flex items-center">
-                <Smile className="mr-2 h-6 w-6" />
+                <Smile className="mr-2 h-6 w-6 "  />
                 Today's Emotional State
               </h1>
               <div className="flex flex-row justify-between">

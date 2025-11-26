@@ -7,7 +7,6 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, PointElement, LineElement, Tooltip, Legend, TimeScale } from "chart.js";
-import { CandlestickController, CandlestickElement } from "chartjs-chart-financial";
 import { Chart } from "react-chartjs-2";
 import 'chartjs-adapter-date-fns';
 import classNames from "classnames";
@@ -22,8 +21,6 @@ ChartJS.register(
   Tooltip,
   Legend,
   TimeScale,
-  CandlestickController,
-  CandlestickElement
 );
 
 const tabListOptions = ["Chart","Options","News","Financials","Analysts","Risk Analysis","Releases","Notes","Profile"];
@@ -51,6 +48,38 @@ const rsiDataSample = {
 };
 
 const StockDashboard = () => {
+  const [isFinancialRegistered, setIsFinancialRegistered] = useState(false);
+
+  React.useEffect(() => {
+    // Dynamically import the financial chart plugin and register it with Chart.js.
+    // This avoids import-time/SSR issues and makes the registration explicit at runtime.
+    let mounted = true;
+    (async () => {
+      try {
+        const mod = await import('chartjs-chart-financial');
+        // some versions export default or named — handle both
+        // @ts-ignore
+        const CandlestickController = mod.CandlestickController ?? mod.default?.CandlestickController;
+        // @ts-ignore
+        const CandlestickElement = mod.CandlestickElement ?? mod.default?.CandlestickElement;
+        if (CandlestickController && CandlestickElement) {
+          ChartJS.register(CandlestickController, CandlestickElement);
+          if (mounted) setIsFinancialRegistered(true);
+        } else {
+          // try to register everything exported (fallback)
+          // @ts-ignore
+          if (mod.register) mod.register(ChartJS);
+          if (mounted) setIsFinancialRegistered(true);
+        }
+      } catch (err) {
+        // keep console error for debugging — chart will show a fallback message
+        // eslint-disable-next-line no-console
+        console.error('Failed to load chartjs-chart-financial:', err);
+      }
+    })();
+    return () => { mounted = false; };
+  }, []);
+
   const [activeTab, setActiveTab] = useState<string>('Chart');
   const [orderType, setOrderType] = useState('Market Price');
   const [quantity, setQuantity] = useState(100);
@@ -70,9 +99,9 @@ const StockDashboard = () => {
   const estimatedTotal = quantity * price + transactionFees;
 
   return (
-    <div className="flex flex-col min-h-screen bg-background text-foreground p-6 max-w-7xl mx-auto gap-6">
+    <div className="flex flex-col relative min-h-screen bg-background text-foreground p-6 w-full  wgap-6">
       <Sidebar />
-      <header className="flex justify-between items-center border-b border-border pb-4">
+      <header className="flex w-full justify-between items-center border-b border-border pb-4">
         <div className="flex items-center gap-3">
           <img src="https://i.pravatar.cc/40" alt="User Avatar" className="rounded-full" />
           <div>
@@ -94,14 +123,14 @@ const StockDashboard = () => {
           <input type="search" placeholder="Search" className="bg-neutral-900 rounded-md text-white px-4 py-2 w-48 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-400" />
         </div>
       </header>
-  <Tabs value={activeTab} onValueChange={(v:string)=>setActiveTab(v)} className="border-b border-border mb-2">
+  <Tabs value={activeTab} onValueChange={(v:string)=>setActiveTab(v)} className="border-b w-full border-border mb-2">
         <TabsList>
           {tabListOptions.map(t => (
             <TabsTrigger key={t} value={t} className="text-xs">{t}</TabsTrigger>
           ))}
         </TabsList>
       </Tabs>
-      <div className="grid grid-cols-12 gap-6">
+      <div className="grid w-full grid-cols-12 gap-6">
         <section className="col-span-9 flex flex-col gap-4">
           <div className="flex justify-between items-center text-sm">
             <div>
@@ -135,7 +164,11 @@ const StockDashboard = () => {
           </div>
           <div className="text-xs text-muted-foreground mb-2">Open <span className="text-primary">408.36</span> High <span className="text-primary">408.36</span> Low <span className="text-primary">408.36</span> Close <span className="text-primary">408.36</span> <span className="text-success">+8.90 +2.14%</span> Vol <span className="text-primary">56,254,781</span></div>
           <div className="rounded p-2 bg-card/60 backdrop-blur-sm border border-border shadow-sm">
-            <Chart type="candlestick" data={{ datasets:[{ label:'MSFT', data: candlestickDataSample as any }] }} options={{ responsive:true, animation:{ duration:1000, easing:'easeInOutSine'}, scales:{ x:{ type:'time', time:{ unit:'day'}, grid:{ color:'#222'}, ticks:{ color:'#888'}}, y:{ grid:{ color:'#222'}, ticks:{ color:'#888'}}}, plugins:{ legend:{ display:false}, tooltip:{ mode:'index', intersect:false}}}} height={350} />
+            {isFinancialRegistered ? (
+              <Chart type="candlestick" data={{ datasets:[{ label:'MSFT', data: candlestickDataSample as any }] }} options={{ responsive:true, animation:{ duration:1000, easing:'easeInOutSine'}, scales:{ x:{ type:'time', time:{ unit:'day'}, grid:{ color:'#222'}, ticks:{ color:'#888'}}, y:{ grid:{ color:'#222'}, ticks:{ color:'#888'}}}, plugins:{ legend:{ display:false}, tooltip:{ mode:'index', intersect:false}}}} height={350} />
+            ) : (
+              <div className="h-[350px] flex items-center justify-center text-sm text-muted-foreground">Loading chart…</div>
+            )}
           </div>
           <div className="rounded p-2 mt-2 bg-card/60 backdrop-blur-sm border border-border shadow-sm">
             <Chart type="line" data={rsiDataSample} options={{ responsive:true, animation:{ duration:1200, easing:'easeInOutQuart'}, scales:{ y:{ min:0, max:100, ticks:{ color:'#666'}, grid:{ drawTicks:false, color:'#222'}}, x:{ ticks:{ color:'#666'}, grid:{ drawTicks:false, color:'#222'}}, }, plugins:{ legend:{ labels:{ color:'#38ff7e'} }}}} height={120} />
