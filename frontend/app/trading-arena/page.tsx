@@ -11,6 +11,8 @@ import { Chart } from "react-chartjs-2";
 import 'chartjs-adapter-date-fns';
 import classNames from "classnames";
 import { Sidebar } from "@/components/Sidebar";
+import { Toaster } from "@/components/ui/sonner";
+import { toast } from "sonner";
 
 ChartJS.register(
   CategoryScale,
@@ -98,8 +100,41 @@ const StockDashboard = () => {
   const transactionFees = 4;
   const estimatedTotal = quantity * price + transactionFees;
 
+  // Continuous listener: poll backend for alert signal
+  React.useEffect(() => {
+    const endpoint = process.env.NEXT_PUBLIC_ALERTS_URL || 'http://localhost:8000/auth/alert-status';
+    let active = true;
+    let timer: ReturnType<typeof setInterval> | null = null;
+    const poll = async () => {
+      try {
+        const res = await fetch(endpoint, { headers: { 'Accept': 'application/json' }, cache: 'no-store' });
+        if (!res.ok) return;
+        const data = await res.json();
+        // Expect shape: { alert: boolean, title?: string, message?: string }
+        if (active && data?.alert === true) {
+          toast.info(data?.title ?? 'Trading Alert', {
+            description: data?.message ?? 'Backend signaled an alert condition.',
+            duration: 6000,
+          });
+        }
+      } catch (e) {
+        // optional: backoff or log silently
+        // console.debug('Alert poll error', e);
+      }
+    };
+    // Start polling every 5s
+    poll();
+    timer = setInterval(poll, 5000);
+    return () => {
+      active = false;
+      if (timer) clearInterval(timer);
+    };
+  }, []);
+
   return (
     <div className="flex flex-col relative min-h-screen bg-background text-foreground p-6 w-full  wgap-6">
+      {/* Global toaster for trading arena alerts */}
+      <Toaster position="bottom-right" richColors />
       <Sidebar />
       <header className="flex w-full justify-between items-center border-b border-border pb-4">
         <div className="flex items-center gap-3">
@@ -161,6 +196,16 @@ const StockDashboard = () => {
               <span className={classNames('text-xs',{ 'text-success':priceChangePercent>0,'text-destructive':priceChangePercent<0})}>{priceChangePercent>0?'+':''}{priceChangePercent.toFixed(2)}%</span>
             </div>
             <span className="text-xs ml-6">After hours: <span className={classNames(stopPriceEnabled?'text-destructive':'text-muted-foreground')}>{afterHoursPrice.toFixed(2)} {afterHoursChange>0?'+':''}{afterHoursChange.toFixed(2)} {afterHoursPercent>0?'+':''}{afterHoursPercent.toFixed(2)}%</span> | 19:59 04/26 EDT</span>
+          </div>
+          {/* Debugging button to manually trigger an alert */}
+          <div className="flex gap-2 mb-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => toast.success('Test alert: MSFT price hit threshold', { description: 'Debug trigger from Trading Arena', duration: 5000 })}
+            >
+              Trigger Test Alert
+            </Button>
           </div>
           <div className="text-xs text-muted-foreground mb-2">Open <span className="text-primary">408.36</span> High <span className="text-primary">408.36</span> Low <span className="text-primary">408.36</span> Close <span className="text-primary">408.36</span> <span className="text-success">+8.90 +2.14%</span> Vol <span className="text-primary">56,254,781</span></div>
           <div className="rounded p-2 bg-card/60 backdrop-blur-sm border border-border shadow-sm">
